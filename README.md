@@ -33,156 +33,61 @@ Pré-requisitos:
 - Para rodar no iOS localmente é necessário macOS com Xcode.
 
 Instalar dependências:
-y# Rodar no Android
+
+```bash
+npm install
+# ou
+yarn
+```
+
+Executar o Metro (Expo):
+
+```bash
+npm run start
+# ou
+yarn start
+```
+
+Rodar no Android:
+
+```bash
 npm run android
 # ou
 yarn android
+```
 
-# Rodar no iOS
+Rodar no iOS (macOS + Xcode):
+
+```bash
 npm run ios
 # ou
 yarn ios
 ```
 
-Estrutura do Projeto
-A estrutura de pastas segue o essencial solicitado para a atividade de PDM:
+Observação: Se preferir, use o app Expo Go no celular para rodar a build de desenvolvimento pelo QR code.
 
-mypokedex/
-├── App.tsx                     # Componente raiz que renderiza a HomeScreen
-├── package.json
-├── src/
-│   ├── components/
-│   │   └── PokemonCard/        # Card de exibição do Pokémon na lista
-│   │       ├── index.tsx
-+│   │       └── styles.ts
-│   ├── config/
-│   │   └── env.ts              # Armazena a URL base da API
-│   ├── hooks/
-│   │   └── usePokemons.ts      # Hook customizado para buscar e paginar
-│   ├── screens/
-│   │   └── Home/               # Tela principal (lista e modal de detalhe)
-│   │       ├── index.tsx
-│   │       └── styles.ts
-│   ├── services/
-│   │   └── api.ts              # Instância configurada do Axios
-│   ├── types/
-│   │   └── pokemon.d.ts        # Tipos TypeScript da API
-│   └── utils/
-│       └── translators.ts      # Funções para traduzir tipos, stats, etc.
-└── tsconfig.json
-Fluxo de Dados e Arquitetura
-O App.tsx renderiza a HomeScreen.
+## Configuração de ambiente
 
-HomeScreen utiliza o hook customizado usePokemons para carregar a lista inicial de pokémons.
+O projeto usa um pequeno arquivo de configuração `config/env.ts` com a variável `API_BASE_URL`.
 
-usePokemons chama o api.ts (Axios) para buscar a lista paginada em /pokemon?limit=20&offset=....
+Arquivo criado:
 
-Para cada item da lista (PokemonResult), o hook faz uma requisição individual à url do pokémon para obter o PokemonDetail (sprites, tipos, stats, etc.).
+```ts
+// config/env.ts
+export const API_BASE_URL = 'https://pokeapi.co/api/v2';
+```
 
-HomeScreen renderiza os dados usando FlatList, onde cada item é um componente PokemonCard.
+Em projetos reais, para variar entre dev/prod/CI, recomenda-se usar variáveis de ambiente e/ou bibliotecas como `react-native-config` ou `expo-constants` para injetar valores.
 
-Ao tocar em um PokemonCard, o estado selectedPokemon na HomeScreen é atualizado.
+## Estrutura do projeto
 
-Quando selectedPokemon não é nulo, um overlay é exibido, renderizando o componente PokemonDetailScreen (definido dentro de HomeScreen/index.tsx) com as informações detalhadas.
+Principais arquivos e diretórios:
 
-Clicar no "X" do modal limpa o estado selectedPokemon, fechando o detalhe.
-
-Decisão de Design: A tela de detalhes foi implementada como um modal condicional dentro da própria HomeScreen, em vez de usar uma biblioteca de navegação (como react-navigation), para manter o projeto focado e simples.
-
-Detalhes de Implementação
-src/services/api.ts: Instancia o Axios com a baseURL vinda de config/env.ts.
-
-src/hooks/usePokemons.ts: É o cérebro da aplicação.
-
-Gerencia os estados de pokemons (lista), loading (carregando), error (erro) e offset (paginação).
-
-Controla a paginação com ITEMS_PER_PAGE = 20.
-
-Possui a função fetchPokemonDetails que busca os detalhes de cada pokémon individualmente.
-
-Concatena os novos pokémons ao estado existente, garantindo que não haja duplicatas.
-
-src/components/PokemonCard/index.tsx: Componente de exibição.
-
-Prioriza a imagem official-artwork e usa front_default como fallback.
-
-Exibe o nome capitalizado.
-
-Mapeia os tipos do pokémon, traduzindo-os e aplicando cores dinâmicas (getTypeColor).
-
-src/utils/translators.ts: Funções puras para tradução.
-
-translateType: (ex: 'fire' -> 'Fogo').
-
-translateStatName: (ex: 'special-attack' -> 'Ataque Especial').
-
-translateAbilityName: (ex: 'solar-power' -> 'Solar Power').
-
-src/screens/Home/index.tsx:
-
-Contém a lógica da FlatList (incluindo numColumns={2}) e a renderização do PokemonCard.
-
-Gerencia o estado de selectedPokemon para abrir/fechar o modal de detalhes.
-
-Contém o sub-componente PokemonDetailScreen (o modal).
-
-Contratos / Types
-Os tipos TypeScript estão em src/types/pokemon.d.ts e representam o subconjunto da resposta da PokeAPI que o app consome:
-
-PokemonListResponse: A resposta da lista principal (/pokemon).
-
-PokemonResult: Cada item da lista ({ name, url }).
-
-PokemonDetail: A resposta completa do pokémon (id, name, height, weight, sprites, stats, types, abilities).
-
-Lógica de Paginação (Infinite Scroll)
-A paginação é implementada no usePokemons e disparada pela FlatList na HomeScreen:
-
-A FlatList usa a prop onEndReached para detectar quando o usuário chega ao fim da rolagem.
-
-onEndReached chama a função fetchNextPage (exposta pelo hook).
-
-fetchNextPage verifica se há mais itens para carregar (hasMore) e se uma busca já não está em andamento (!loading).
-
-Ela então dispara fetchPokemons() (função interna do hook) para buscar os próximos 20 itens.
-
-Os novos pokémons são adicionados ao final da lista no estado, atualizando a FlatList e criando o efeito de "scroll infinito".
-
-Performance e Limitações
-Múltiplas Requisições: O hook busca 20 pokémons por página. Para cada um, ele faz uma requisição de detalhe adicional. Isso significa que cada "página" dispara 21 requisições (1 para a lista + 20 para os detalhes).
-
-Sugestões de Performance:
-
-Implementar cache (em memória ou AsyncStorage) para os detalhes dos pokémons, evitando novas requisições para itens já vistos.
-
-Usar React.memo no PokemonCard para evitar re-renderizações desnecessárias.
-
-Otimizar a FlatList com props como initialNumToRender e maxToRenderPerBatch.
-
-Sugestões de Testes
-Para aumentar a qualidade do projeto, os próximos passos seriam:
-
-Testes Unitários (Jest):
-
-Testar as funções de src/utils/translators.ts para garantir que todas as traduções estão corretas.
-
-Testes de Integração (React Native Testing Library):
-
-Mockar o axios (via jest.mock) e testar o hook usePokemons, simulando respostas de sucesso e erro da API.
-
-Testar se o PokemonCard renderiza os dados corretamente.
-
-Roadmap / Melhorias Sugeridas
-Migrar para React Navigation: Substituir o modal de detalhe pelo Stack Navigator, conforme sugerido na atividade original da disciplina, para uma navegação mais robusta.
-
-Adicionar Testes Unitários: Configurar o Jest e testar as funções de translators.ts.
-
-Campo de Busca: Adicionar um TextInput no topo da HomeScreen para filtrar pokémons por nome.
-
-Refatorar Cores e Estilos: Mover a função getTypeColor para um arquivo em src/theme ou src/utils para ser reutilizada.
-
-Cache de Dados: Implementar uma estratégia de cache simples (ex: React Context ou React Query) para armazenar os detalhes dos pokémons e reduzir requisições.
-
+- `App.tsx` — entrada do app (renderiza `HomeScreen`).
+- `index.ts` — registro do root para Expo.
+- `src/services/api.ts` — instância do Axios (usa `API_BASE_URL`).
+- `src/hooks/usePokemons.ts` — hook custom para fetch/paginação e consolidação dos detalhes dos pokémons.
+- `src/screens/Home` — tela principal com `FlatList` e overlay de detalhe.
 - `src/components/PokemonCard` — card de pokémon (imagem, nome, tipos).
 - `src/types/pokemon.d.ts` — tipos TypeScript que representam as respostas da PokeAPI usadas pelo app.
 - `src/utils/translators.ts` — funções utilitárias para traduzir tipos e nomes para Português.
