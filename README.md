@@ -210,15 +210,3 @@ npm run start
 npm run android
 npm run ios
 ```
-
-## Notas finais
-
-Criei `config/env.ts` com a `API_BASE_URL` apontando para a PokeAPI pública. Também corrigi a lógica de paginação em `src/hooks/usePokemons.ts` para evitar comportamento inconsistente ao paginar.
-
-Se quiser, posso também:
-
-- Implementar chunked fetching para reduzir impacto em redes lentas.
-- Adicionar testes iniciais (Jest) e um pipeline simples de CI.
-- Adicionar ESLint/Prettier config e scripts de lint.
-
-Diga qual item prefere que eu faça a seguir e eu prosseguirei com as mudanças e validações.
